@@ -120,6 +120,21 @@ export default function App() {
     if (videoRef.current) videoRef.current.playbackRate = playbackRate;
   }, [playbackRate]);
 
+  // Playback is driven only by the selected media path. Background worker
+  // registration must never be on the critical path for local playback.
+  useEffect(() => {
+    if (!lesson || !videoRef.current) return;
+
+    const video = videoRef.current;
+    video.playbackRate = playbackRate;
+
+    // For a user-initiated local open, try to start immediately. Browsers /
+    // WebViews may still require the user to press Play, so failure is ignored.
+    if (lesson.id.startsWith("opening:")) {
+      void video.play().catch(() => {});
+    }
+  }, [lesson?.playbackPath]);
+
   useEffect(() => {
     if (!activeSegment || !shadowVisible) return;
 
@@ -315,7 +330,7 @@ async function chooseFile() {
             : "Ready to play."
         );
 
-        await refreshLessons();
+        void refreshLessons();
 
         // v2.5 and older used a slow full-file SHA as the lesson id.
         // Recover those subtitles in the background without delaying play.

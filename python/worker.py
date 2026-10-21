@@ -636,7 +636,10 @@ def open_media(data, original_path):
     else:
         playback = original
 
-    duration = ffprobe_duration(playback)
+    # Direct-play media must not wait for ffprobe before playback.
+    # The WebView reads duration from the media element itself. MKV is the
+    # one exception because conversion is already required before playback.
+    duration = ffprobe_duration(playback) if suffix in NEEDS_CONVERSION else 0.0
 
     connection.execute(
         """

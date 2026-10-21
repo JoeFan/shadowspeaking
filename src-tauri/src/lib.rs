@@ -2,33 +2,6 @@ use serde_json::Value;
 use std::path::{Path, PathBuf};
 use tauri::{AppHandle, Manager};
 
-fn python_executable() -> String {
-    std::env::var("SHADOWING_PYTHON")
-        .unwrap_or_else(|_| "python3.12".to_string())
-}
-
-fn worker_path() -> Result<PathBuf, String> {
-    let manifest =
-        PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-
-    let path = manifest
-        .parent()
-        .ok_or("Cannot resolve project root")?
-        .join("python")
-        .join("worker.py");
-
-    if !path.exists() {
-        return Err(
-            format!(
-                "Worker missing: {}",
-                path.display()
-            )
-        );
-    }
-
-    Ok(path)
-}
-
 fn resolve_worker_path(app: &AppHandle) -> Result<std::path::PathBuf, String> {
     if cfg!(debug_assertions) {
         let dev_worker = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -102,37 +75,40 @@ fn run_worker(app: &AppHandle, args: &[String]) -> Result<Value, String> {
         .map_err(|e| format!("Invalid worker response: {e}\n{}", stdout.trim()))
 }
 
+async fn run_worker_async(
+    app: AppHandle,
+    args: Vec<String>,
+) -> Result<Value, String> {
+    tauri::async_runtime::spawn_blocking(move || run_worker(&app, &args))
+        .await
+        .map_err(|e| format!("Worker task failed: {e}"))?
+}
+
 #[tauri::command]
-fn open_media(
+async fn open_media(
     app: AppHandle,
     path: String,
 ) -> Result<Value, String> {
     if !Path::new(&path).exists() {
-        return Err(
-            "File does not exist".into()
-        );
+        return Err("File does not exist".into());
     }
 
-    run_worker(
-        &app,
-        &[
-            "open".into(),
-            "--path".into(),
-            path,
-        ],
+    run_worker_async(
+        app,
+        vec!["open".into(), "--path".into(), path],
     )
+    .await
 }
 
-
 #[tauri::command]
-fn recover_legacy_shadow(
+async fn recover_legacy_shadow(
     app: AppHandle,
     id: String,
     path: String,
 ) -> Result<Value, String> {
-    run_worker(
-        &app,
-        &[
+    run_worker_async(
+        app,
+        vec![
             "legacy".into(),
             "--id".into(),
             id,
@@ -140,6 +116,7 @@ fn recover_legacy_shadow(
             path,
         ],
     )
+    .await
 }
 
 #[tauri::command]
@@ -148,56 +125,45 @@ async fn prepare_shadow(
     id: String,
     language: String,
 ) -> Result<Value, String> {
-    tauri::async_runtime::spawn_blocking(move || {
-        run_worker(
-            &app,
-            &[
-                "shadow".into(),
-                "--id".into(),
-                id,
-                "--language".into(),
-                language,
-            ],
-        )
-    })
-    .await
-    .map_err(|e| format!("Shadow worker task failed: {e}"))?
-}
-
-#[tauri::command]
-fn list_lessons(
-    app: AppHandle,
-) -> Result<Value, String> {
-    run_worker(
-        &app,
-        &["list".into()],
+    run_worker_async(
+        app,
+        vec![
+            "shadow".into(),
+            "--id".into(),
+            id,
+            "--language".into(),
+            language,
+        ],
     )
+    .await
 }
 
 #[tauri::command]
-fn get_lesson(
+async fn list_lessons(app: AppHandle) -> Result<Value, String> {
+    run_worker_async(app, vec!["list".into()]).await
+}
+
+#[tauri::command]
+async fn get_lesson(
     app: AppHandle,
     id: String,
 ) -> Result<Value, String> {
-    run_worker(
-        &app,
-        &[
-            "get".into(),
-            "--id".into(),
-            id,
-        ],
+    run_worker_async(
+        app,
+        vec!["get".into(), "--id".into(), id],
     )
+    .await
 }
 
 #[tauri::command]
-fn save_position(
+async fn save_position(
     app: AppHandle,
     id: String,
     position: f64,
 ) -> Result<Value, String> {
-    run_worker(
-        &app,
-        &[
+    run_worker_async(
+        app,
+        vec![
             "position".into(),
             "--id".into(),
             id,
@@ -205,32 +171,30 @@ fn save_position(
             position.to_string(),
         ],
     )
+    .await
 }
 
 #[tauri::command]
-fn delete_lesson(
+async fn delete_lesson(
     app: AppHandle,
     id: String,
 ) -> Result<Value, String> {
-    run_worker(
-        &app,
-        &[
-            "delete".into(),
-            "--id".into(),
-            id,
-        ],
+    run_worker_async(
+        app,
+        vec!["delete".into(), "--id".into(), id],
     )
+    .await
 }
 
 #[tauri::command]
-fn export_shadow_package(
+async fn export_shadow_package(
     app: AppHandle,
     id: String,
     path: String,
 ) -> Result<Value, String> {
-    run_worker(
-        &app,
-        &[
+    run_worker_async(
+        app,
+        vec![
             "export".into(),
             "--id".into(),
             id,
@@ -238,41 +202,35 @@ fn export_shadow_package(
             path,
         ],
     )
+    .await
 }
 
 #[tauri::command]
-fn import_shadow_package(
+async fn import_shadow_package(
     app: AppHandle,
     path: String,
 ) -> Result<Value, String> {
     if !Path::new(&path).exists() {
-        return Err(
-            "Shadow Lesson file does not exist."
-                .into()
-        );
+        return Err("Shadow Lesson file does not exist.".into());
     }
 
-    run_worker(
-        &app,
-        &[
-            "import".into(),
-            "--path".into(),
-            path,
-        ],
+    run_worker_async(
+        app,
+        vec!["import".into(), "--path".into(), path],
     )
+    .await
 }
 
-
 #[tauri::command]
-fn update_segment_text(
+async fn update_segment_text(
     app: AppHandle,
     id: String,
     segment_id: i64,
     text: String,
 ) -> Result<Value, String> {
-    run_worker(
-        &app,
-        &[
+    run_worker_async(
+        app,
+        vec![
             "edit-text".into(),
             "--id".into(),
             id,
@@ -282,17 +240,18 @@ fn update_segment_text(
             text,
         ],
     )
+    .await
 }
 
 #[tauri::command]
-fn reset_segment_text(
+async fn reset_segment_text(
     app: AppHandle,
     id: String,
     segment_id: i64,
 ) -> Result<Value, String> {
-    run_worker(
-        &app,
-        &[
+    run_worker_async(
+        app,
+        vec![
             "reset-text".into(),
             "--id".into(),
             id,
@@ -300,18 +259,19 @@ fn reset_segment_text(
             segment_id.to_string(),
         ],
     )
+    .await
 }
 
 #[tauri::command]
-fn set_segment_like(
+async fn set_segment_like(
     app: AppHandle,
     id: String,
     segment_id: i64,
     liked: bool,
 ) -> Result<Value, String> {
-    run_worker(
-        &app,
-        &[
+    run_worker_async(
+        app,
+        vec![
             "like".into(),
             "--id".into(),
             id,
@@ -321,6 +281,7 @@ fn set_segment_like(
             if liked { "true".into() } else { "false".into() },
         ],
     )
+    .await
 }
 
 pub fn run() {

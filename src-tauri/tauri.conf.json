@@ -36,7 +36,9 @@
     "targets": "all",
     "resources": [
       "../python/worker.py",
-      "../python/requirements.txt"
+      "../python/requirements.txt",
+      "../bin/ffmpeg",
+      "../bin/ffprobe"
     ]
   }
 }

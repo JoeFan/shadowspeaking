@@ -1,0 +1,10 @@
+/Users/fanling/learning/shadowing-desktop-player-v1/src-tauri/target/release/deps/zerovec_derive-c05e9d0eb899316e.d: /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-derive-0.11.6/src/lib.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-derive-0.11.6/src/make_ule.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-derive-0.11.6/src/make_varule.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-derive-0.11.6/src/ule.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-derive-0.11.6/src/utils.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-derive-0.11.6/src/varule.rs
+
+/Users/fanling/learning/shadowing-desktop-player-v1/src-tauri/target/release/deps/libzerovec_derive-c05e9d0eb899316e.dylib: /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-derive-0.11.6/src/lib.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-derive-0.11.6/src/make_ule.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-derive-0.11.6/src/make_varule.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-derive-0.11.6/src/ule.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-derive-0.11.6/src/utils.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-derive-0.11.6/src/varule.rs
+
+/Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-derive-0.11.6/src/lib.rs:
+/Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-derive-0.11.6/src/make_ule.rs:
+/Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-derive-0.11.6/src/make_varule.rs:
+/Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-derive-0.11.6/src/ule.rs:
+/Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-derive-0.11.6/src/utils.rs:
+/Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-derive-0.11.6/src/varule.rs:

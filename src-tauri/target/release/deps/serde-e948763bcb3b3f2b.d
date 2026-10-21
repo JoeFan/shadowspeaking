@@ -1,0 +1,14 @@
+/Users/fanling/learning/shadowing-desktop-player-v1/src-tauri/target/release/deps/serde-e948763bcb3b3f2b.d: /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/lib.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/integer128.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/mod.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/de.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/ser.rs /Users/fanling/learning/shadowing-desktop-player-v1/src-tauri/target/release/build/serde-8bab99af87f09cc3/out/private.rs
+
+/Users/fanling/learning/shadowing-desktop-player-v1/src-tauri/target/release/deps/libserde-e948763bcb3b3f2b.rlib: /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/lib.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/integer128.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/mod.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/de.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/ser.rs /Users/fanling/learning/shadowing-desktop-player-v1/src-tauri/target/release/build/serde-8bab99af87f09cc3/out/private.rs
+
+/Users/fanling/learning/shadowing-desktop-player-v1/src-tauri/target/release/deps/libserde-e948763bcb3b3f2b.rmeta: /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/lib.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/integer128.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/mod.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/de.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/ser.rs /Users/fanling/learning/shadowing-desktop-player-v1/src-tauri/target/release/build/serde-8bab99af87f09cc3/out/private.rs
+
+/Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/lib.rs:
+/Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/integer128.rs:
+/Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/mod.rs:
+/Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/de.rs:
+/Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/ser.rs:
+/Users/fanling/learning/shadowing-desktop-player-v1/src-tauri/target/release/build/serde-8bab99af87f09cc3/out/private.rs:
+
+# env-dep:OUT_DIR=/Users/fanling/learning/shadowing-desktop-player-v1/src-tauri/target/release/build/serde-8bab99af87f09cc3/out

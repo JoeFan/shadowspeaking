@@ -1,0 +1,10 @@
+/Users/fanling/learning/shadowing-desktop-player-v1/src-tauri/target/release/deps/toml_datetime-fee6a2f248d221fc.d: /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-1.1.2+spec-1.1.0/src/lib.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-1.1.2+spec-1.1.0/src/datetime.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-1.1.2+spec-1.1.0/src/de.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-1.1.2+spec-1.1.0/src/ser.rs
+
+/Users/fanling/learning/shadowing-desktop-player-v1/src-tauri/target/release/deps/libtoml_datetime-fee6a2f248d221fc.rlib: /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-1.1.2+spec-1.1.0/src/lib.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-1.1.2+spec-1.1.0/src/datetime.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-1.1.2+spec-1.1.0/src/de.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-1.1.2+spec-1.1.0/src/ser.rs
+
+/Users/fanling/learning/shadowing-desktop-player-v1/src-tauri/target/release/deps/libtoml_datetime-fee6a2f248d221fc.rmeta: /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-1.1.2+spec-1.1.0/src/lib.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-1.1.2+spec-1.1.0/src/datetime.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-1.1.2+spec-1.1.0/src/de.rs /Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-1.1.2+spec-1.1.0/src/ser.rs
+
+/Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-1.1.2+spec-1.1.0/src/lib.rs:
+/Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-1.1.2+spec-1.1.0/src/datetime.rs:
+/Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-1.1.2+spec-1.1.0/src/de.rs:
+/Users/fanling/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-1.1.2+spec-1.1.0/src/ser.rs:

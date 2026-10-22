@@ -1,3 +1,67 @@
+name: Build Shadowing Player
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos:
+    name: Build macOS
+    runs-on: macos-14
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install FFmpeg
+        run: brew install ffmpeg
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Make scripts executable
+        run: chmod +x scripts/*.sh
+
+      - name: Build native Faster-Whisper sidecar
+        run: ./scripts/build-macos-sidecar.sh
+
+      - name: Prepare bundled FFmpeg
+        run: ./scripts/prepare-macos-ffmpeg.sh
+
+      - name: Generate Tauri icons
+        run: npm run tauri icon src-tauri/icons/icon.png
+
+      - name: Build macOS app and DMG
+        run: |
+          rm -rf dist
+          rm -rf src-tauri/target/release/bundle
+          npm run build
+          npm run tauri build -- --bundles app,dmg
+
+      - name: Verify bundled runtime
+        shell: bash
+        run: |
+          APP="src-tauri/target/release/bundle/macos/Shadowing Player.app"
           echo "Checking bundled files..."
           find "$APP/Contents" \( -name "shadow-worker" -o -name "ffmpeg" -o -name "ffprobe" \) -print
 
@@ -105,4 +169,3 @@
             --generate-notes \
             release/macos/* \
             release/windows/*
-

@@ -1,5 +1,5 @@
 use serde_json::Value;
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 use tauri::{AppHandle, Manager};
 
 fn resolve_worker_path(app: &AppHandle) -> Result<std::path::PathBuf, String> {

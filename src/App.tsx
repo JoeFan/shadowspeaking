@@ -91,6 +91,7 @@ export default function App() {
   const requestRef = useRef(0);
   const subtitleRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const likedQueueRef = useRef<number[]>([]);
+  const pendingRegistrationRef = useRef<string | null>(null);
 
   const segments = useMemo(() => lesson?.segments ?? [], [lesson]);
   const likedIds = useMemo(
@@ -108,7 +109,13 @@ export default function App() {
   const shadowVisible = shadowState === "active";
 
   useEffect(() => {
-    void refreshLessons();
+    // Do not start Python/SQLite immediately at app launch.
+    // Give the WebView time to paint and become responsive first.
+    const timer = window.setTimeout(() => {
+      void refreshLessons();
+    }, 1800);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -234,6 +241,7 @@ function openVideoUrl() {
   }
 
   stopSegmentPlayback();
+  pendingRegistrationRef.current = null;
   setActiveSegment(null);
   setSelectedId(null);
   setSubtitleFilter("all");
@@ -314,62 +322,10 @@ async function chooseFile() {
     setOpening(false);
     setStatus("Playing original file · registering in background…");
 
-    void invoke<Lesson>("open_media", { path: selected })
-      .then(async (result) => {
-        // Keep playback on the same original path, so this metadata
-        // refresh does not interrupt the playing video.
-        setLesson((current) => {
-          if (!current || current.sourcePath !== selected) return current;
-          return { ...result, playbackPath: selected, sourcePath: selected };
-        });
+    // Do NOT start Python yet. Let the WebView reach canplay first.
+    // This avoids CPU / disk contention during the first local media open.
+    pendingRegistrationRef.current = selected;
 
-        setShadowState(result.shadowReady ? "ready" : "idle");
-        setStatus(
-          result.shadowReady
-            ? "Ready to play · Shadow Speaking already prepared."
-            : "Ready to play."
-        );
-
-        void refreshLessons();
-
-        // v2.5 and older used a slow full-file SHA as the lesson id.
-        // Recover those subtitles in the background without delaying play.
-        if (!result.shadowReady) {
-          void invoke<Lesson & { found?: boolean }>(
-            "recover_legacy_shadow",
-            {
-              id: result.id,
-              path: selected
-            }
-          ).then((legacy) => {
-            if (!legacy.found) return;
-
-            setLesson((current) => {
-              if (!current || current.sourcePath !== selected) return current;
-              return {
-                ...current,
-                ...legacy,
-                playbackPath: selected,
-                sourcePath: selected
-              };
-            });
-
-            setShadowState("ready");
-            setStatus(
-              "Ready to play · Previous Shadow Speaking result recovered."
-            );
-
-            void refreshLessons();
-          }).catch(() => {
-            // Legacy recovery is optional and must never block playback.
-          });
-        }
-      })
-      .catch((error) => {
-        setStatus(
-          `Video is open, but Recent registration failed: ${String(error)}`
-        );
-      });
 
     return;
   }
@@ -391,6 +347,72 @@ async function chooseFile() {
     setOpening(false);
   }
 }
+
+  function registerOpenedMediaAfterPlaybackStarted(path: string) {
+    if (pendingRegistrationRef.current !== path) return;
+
+    // Clear first so repeated canplay events cannot launch duplicate workers.
+    pendingRegistrationRef.current = null;
+
+    void invoke<Lesson>("open_media", { path })
+      .then((result) => {
+        setLesson((current) => {
+          if (!current || current.sourcePath !== path) return current;
+          return { ...result, playbackPath: path, sourcePath: path };
+        });
+
+        setShadowState(result.shadowReady ? "ready" : "idle");
+        setStatus(
+          result.shadowReady
+            ? "Ready to play · Shadow Speaking already prepared."
+            : "Ready to play."
+        );
+
+        // Refresh Recent only after registration is complete.
+        window.setTimeout(() => {
+          void refreshLessons();
+        }, 300);
+
+        if (!result.shadowReady) {
+          // Legacy SHA recovery is intentionally delayed further.
+          window.setTimeout(() => {
+            void invoke<Lesson & { found?: boolean }>(
+              "recover_legacy_shadow",
+              { id: result.id, path }
+            )
+              .then((legacy) => {
+                if (!legacy.found) return;
+
+                setLesson((current) => {
+                  if (!current || current.sourcePath !== path) return current;
+                  return {
+                    ...current,
+                    ...legacy,
+                    playbackPath: path,
+                    sourcePath: path
+                  };
+                });
+
+                setShadowState("ready");
+                setStatus(
+                  "Ready to play · Previous Shadow Speaking result recovered."
+                );
+
+                void refreshLessons();
+              })
+              .catch(() => {
+                // Optional compatibility work must never disturb playback.
+              });
+          }, 1200);
+        }
+      })
+      .catch((error) => {
+        setStatus(
+          `Video is playing, but Recent registration failed: ${String(error)}`
+        );
+      });
+  }
+
 
   async function openRecent(id: string) {
     try {
@@ -799,6 +821,11 @@ async function chooseFile() {
     if (!lesson || !videoRef.current) return;
     if (isRemoteUrl(lesson.sourcePath)) return;
 
+    // A transient lesson has not been registered in SQLite yet.
+    // More importantly, spawning Python while switching media can make
+    // the first open feel frozen.
+    if (lesson.id.startsWith("opening:")) return;
+
     try {
       await invoke("save_position", {
         id: lesson.id,
@@ -996,7 +1023,7 @@ async function chooseFile() {
                   src={mediaSrc}
                   controls
                   playsInline
-                  preload="metadata"
+                  preload="auto"
                   onTimeUpdate={handleTimeUpdate}
                   onPause={() => void savePosition()}
                   onError={() => {
@@ -1004,6 +1031,15 @@ async function chooseFile() {
                       setStatus(
                         "Could not play this URL directly. It may be a webpage, require login/headers, use unsupported streaming, or be DRM-protected."
                       );
+                    }
+                  }}
+                  onCanPlay={() => {
+                    if (
+                      lesson &&
+                      !isRemoteUrl(lesson.sourcePath) &&
+                      lesson.id.startsWith("opening:")
+                    ) {
+                      registerOpenedMediaAfterPlaybackStarted(lesson.sourcePath);
                     }
                   }}
                   onLoadedMetadata={() => {
@@ -1046,8 +1082,11 @@ async function chooseFile() {
                       <button
                         className="shadow-button preparing"
                         disabled
+                        aria-disabled="true"
+                        aria-busy="true"
                       >
-                        ⏳ Preparing…
+                        <span className="shadow-spinner" aria-hidden="true" />
+                        Preparing…
                       </button>
                     )}
 

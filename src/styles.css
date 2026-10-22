@@ -219,6 +219,28 @@ video {
 
 .shadow-button.preparing {
   background: #4b5563;
+  opacity: 0.58;
+  cursor: not-allowed;
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.shadow-spinner {
+  width: 13px;
+  height: 13px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: shadow-spin 0.8s linear infinite;
+  flex: 0 0 auto;
+}
+
+@keyframes shadow-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .toolbar-button {

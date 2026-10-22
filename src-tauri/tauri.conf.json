@@ -42,8 +42,9 @@
       "icons/icon.ico"
     ],
     "resources": [
-      "../python/worker.py",
-      "../python/requirements.txt"
+      "sidecars/shadow-worker",
+      "../bin/ffmpeg",
+      "../bin/ffprobe"
     ]
   }
 }

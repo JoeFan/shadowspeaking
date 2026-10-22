@@ -2,29 +2,38 @@ use serde_json::Value;
 use std::path::{Path};
 use tauri::{AppHandle, Manager};
 
-fn resolve_worker_path(app: &AppHandle) -> Result<std::path::PathBuf, String> {
-    if cfg!(debug_assertions) {
-        let dev_worker = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("..").join("python").join("worker.py");
-        if dev_worker.exists() {
-            return Ok(dev_worker);
-        }
-    }
+fn resolve_dev_worker_path() -> std::path::PathBuf {
+    std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("python")
+        .join("worker.py")
+}
 
-    let resource_dir = app.path().resource_dir()
+fn resolve_sidecar_path(app: &AppHandle) -> Result<Option<std::path::PathBuf>, String> {
+    let resource_dir = app
+        .path()
+        .resource_dir()
         .map_err(|e| format!("Could not resolve app resource directory: {e}"))?;
 
-    for candidate in [
-        resource_dir.join("python").join("worker.py"),
-        resource_dir.join("_up_").join("python").join("worker.py"),
-        resource_dir.join("worker.py"),
-    ] {
+    let exe_name = if cfg!(target_os = "windows") {
+        "shadow-worker.exe"
+    } else {
+        "shadow-worker"
+    };
+
+    let candidates = [
+        resource_dir.join("sidecars").join(exe_name),
+        resource_dir.join("_up_").join("sidecars").join(exe_name),
+        resource_dir.join(exe_name),
+    ];
+
+    for candidate in candidates {
         if candidate.exists() {
-            return Ok(candidate);
+            return Ok(Some(candidate));
         }
     }
 
-    Err(format!("Bundled worker.py was not found under {}", resource_dir.display()))
+    Ok(None)
 }
 
 fn resolve_python() -> String {
@@ -33,46 +42,104 @@ fn resolve_python() -> String {
             return value;
         }
     }
-    if cfg!(target_os = "windows") { "python".into() } else { "python3".into() }
+
+    let project_venv = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join(".venv")
+        .join(if cfg!(target_os = "windows") {
+            "Scripts/python.exe"
+        } else {
+            "bin/python"
+        });
+
+    if project_venv.exists() {
+        return project_venv.to_string_lossy().to_string();
+    }
+
+    if cfg!(target_os = "windows") {
+        "python".to_string()
+    } else {
+        "python3".to_string()
+    }
 }
 
 fn run_worker(app: &AppHandle, args: &[String]) -> Result<Value, String> {
-    let python = resolve_python();
-    let worker = resolve_worker_path(app)?;
-
-    let data_dir = app.path().app_data_dir()
+    let data_dir = app
+        .path()
+        .app_data_dir()
         .map_err(|e| format!("Could not resolve app data directory: {e}"))?;
+
     std::fs::create_dir_all(&data_dir)
         .map_err(|e| format!("Could not create app data directory: {e}"))?;
 
-    let resource_dir = app.path().resource_dir()
+    let resource_dir = app
+        .path()
+        .resource_dir()
         .map_err(|e| format!("Could not resolve resource directory: {e}"))?;
 
-    let output = std::process::Command::new(&python)
-        .arg(&worker)
-        .arg("--data-dir")
-        .arg(&data_dir)
-        .args(args)
-        .env("SHADOWING_RESOURCE_DIR", &resource_dir)
-        .output()
-        .map_err(|e| format!(
-            "Could not start Python worker using '{}' and '{}': {}",
-            python, worker.display(), e
-        ))?;
+    // Production path: use the frozen native worker sidecar. No Python runtime
+    // is required on the user's machine.
+    let output = if let Some(sidecar) = resolve_sidecar_path(app)? {
+        std::process::Command::new(&sidecar)
+            .arg("--data-dir")
+            .arg(&data_dir)
+            .args(args)
+            .env("SHADOWING_RESOURCE_DIR", &resource_dir)
+            .output()
+            .map_err(|e| {
+                format!(
+                    "Could not start bundled Shadow worker '{}': {}",
+                    sidecar.display(),
+                    e
+                )
+            })?
+    } else {
+        // Development fallback: run python/worker.py from the source tree.
+        let worker = resolve_dev_worker_path();
+        if !worker.exists() {
+            return Err(
+                "Bundled shadow-worker was not found, and the development worker.py is unavailable. \
+                 Build the native sidecar before creating the installer."
+                    .to_string(),
+            );
+        }
+
+        let python = resolve_python();
+
+        std::process::Command::new(&python)
+            .arg(&worker)
+            .arg("--data-dir")
+            .arg(&data_dir)
+            .args(args)
+            .env("SHADOWING_RESOURCE_DIR", &resource_dir)
+            .output()
+            .map_err(|e| {
+                format!(
+                    "Could not start development Python worker using '{}' and '{}': {}",
+                    python,
+                    worker.display(),
+                    e
+                )
+            })?
+    };
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
         let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
-        return Err(if !stderr.is_empty() { stderr } else if !stdout.is_empty() {
+
+        return Err(if !stderr.is_empty() {
+            stderr
+        } else if !stdout.is_empty() {
             stdout
         } else {
-            format!("Python worker exited with status {}", output.status)
+            format!("Shadow worker exited with status {}", output.status)
         });
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
+
     serde_json::from_str(stdout.trim())
-        .map_err(|e| format!("Invalid worker response: {e}\n{}", stdout.trim()))
+        .map_err(|e| format!("Invalid Shadow worker response: {e}\n{}", stdout.trim()))
 }
 
 async fn run_worker_async(

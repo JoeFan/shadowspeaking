@@ -1,0 +1,108 @@
+          echo "Checking bundled files..."
+          find "$APP/Contents" \( -name "shadow-worker" -o -name "ffmpeg" -o -name "ffprobe" \) -print
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Shadowing-Player-macOS
+          path: |
+            src-tauri/target/release/bundle/dmg/*.dmg
+          if-no-files-found: error
+
+  build-windows:
+    name: Build Windows
+    runs-on: windows-2022
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install FFmpeg
+        shell: powershell
+        run: choco install ffmpeg -y --no-progress
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build native Faster-Whisper sidecar
+        shell: powershell
+        run: .\scripts\build-windows-sidecar.ps1
+
+      - name: Prepare bundled FFmpeg
+        shell: powershell
+        run: .\scripts\prepare-windows-ffmpeg.ps1
+
+      - name: Generate Tauri icons
+        shell: powershell
+        run: npm run tauri icon src-tauri\icons\icon.png
+
+      - name: Build Windows installers
+        shell: powershell
+        run: |
+          if (Test-Path "dist") {
+            Remove-Item "dist" -Recurse -Force
+          }
+
+          if (Test-Path "src-tauri\target\release\bundle") {
+            Remove-Item "src-tauri\target\release\bundle" -Recurse -Force
+          }
+
+          npm run build
+          npm run tauri build -- --bundles msi,nsis
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Shadowing-Player-Windows
+          path: |
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/nsis/*.exe
+          if-no-files-found: error
+
+  publish-release:
+    name: Publish GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - build-macos
+      - build-windows
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Shadowing-Player-macOS
+          path: release/macos
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Shadowing-Player-Windows
+          path: release/windows
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --repo "${{ github.repository }}" \
+            --title "Shadowing Player ${{ github.ref_name }}" \
+            --generate-notes \
+            release/macos/* \
+            release/windows/*
+

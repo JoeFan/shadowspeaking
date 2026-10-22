@@ -34,6 +34,18 @@ SUPPORTED = DIRECT_PLAY | NEEDS_CONVERSION
 _model = None
 
 
+
+
+def is_frozen_worker():
+    return bool(getattr(sys, "frozen", False))
+
+
+def default_model_cache_dir(data_dir):
+    # Keep model downloads outside the read-only .app bundle.
+    path = Path(data_dir) / "models"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
 def now():
     return datetime.now(timezone.utc).isoformat()
 
@@ -1244,6 +1256,13 @@ def main():
     command.add_argument("--liked", choices=["true", "false"], required=True)
 
     args = parser.parse_args()
+
+    # Frozen sidecar: Hugging Face / Faster-Whisper caches must live in app data,
+    # not inside the read-only application bundle.
+    model_cache_dir = default_model_cache_dir(args.data_dir)
+    os.environ.setdefault("HF_HOME", str(model_cache_dir))
+    os.environ.setdefault("HUGGINGFACE_HUB_CACHE", str(model_cache_dir))
+
 
     data = Path(args.data_dir)
     data.mkdir(

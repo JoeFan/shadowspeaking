@@ -1,0 +1,6 @@
+#!/Users/fanling/learning/shadowing-desktop-player-v1/.sidecar-venv/bin/python
+import sys
+from av.__main__ import main
+if __name__ == '__main__':
+    sys.argv[0] = sys.argv[0].removesuffix('.exe')
+    sys.exit(main())
